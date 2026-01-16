@@ -28,7 +28,35 @@ __all__ = [
     "resnet50_c",
     "resnet101_c",
     "resnet152_c",
+    "SimpleCNN",
 ]
+
+
+class SimpleCNN(nn.Module):
+    def __init__(self, num_classes=10, feat_dim=128):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1),  # 32x32
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # 16x16
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # 8x8
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(1),  # 1x1
+        )
+        self.fc_feat = nn.Linear(128, feat_dim)
+        self.fc_out = nn.Linear(feat_dim, num_classes)
+
+    def forward(self, x, return_feat=False):
+        h = self.conv(x).view(x.size(0), -1)
+        z = self.fc_feat(h)
+        z = F.relu(z)
+        out = self.fc_out(z)
+        if return_feat:
+            return out, z
+        return out
 
 
 class BasicBlock(nn.Module):
